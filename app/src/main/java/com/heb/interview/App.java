@@ -3,23 +3,12 @@
  */
 package com.heb.interview;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import com.google.cloud.vision.v1.AnnotateImageRequest;
-import com.google.cloud.vision.v1.AnnotateImageResponse;
-import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
-import com.google.cloud.vision.v1.Feature;
-import com.google.cloud.vision.v1.Image;
-import com.google.cloud.vision.v1.ImageAnnotatorClient;
-import com.google.cloud.vision.v1.LocalizedObjectAnnotation;
-import com.google.cloud.vision.v1.Feature.Type;
-import com.google.protobuf.ByteString;
-
+import io.helidon.config.Config;
+import io.helidon.dbclient.DbClient;
+import io.helidon.media.jsonb.JsonbSupport;
+import io.helidon.media.jsonp.JsonpSupport;
 import io.helidon.webserver.Routing;
 import io.helidon.webserver.ServerRequest;
 import io.helidon.webserver.ServerResponse;
@@ -27,69 +16,81 @@ import io.helidon.webserver.WebServer;
 
 public class App {
 
-    public static List<String> detectLocalizedObjects(String filePath) throws IOException {
-        List<String> objects = new ArrayList<>();
-        List<AnnotateImageRequest> requests = new ArrayList<>();
+    static ObjectDetector objectDetector;
 
-        ByteString imgBytes = ByteString.readFrom(new FileInputStream(filePath));
+    public static void processPostRequest(ServerRequest req, ServerResponse res) {
+        System.out.println(req.content().asStream(Byte.class));
+        // ByteString byteString;
+        // try {
+        // byteString = ByteString.readFrom(new ByteArrayInputStream(value.getBytes()));
+        // System.out.println(byteString.toStringUtf8());
+        // Image image = Image.newBuilder().setContent(byteString).build();
+        // List<String> objects = objectDetector.detectObjects(image);
 
-        Image img = Image.newBuilder().setContent(imgBytes).build();
-        AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
-                .addFeatures(Feature.newBuilder().setType(Type.OBJECT_LOCALIZATION))
-                .setImage(img)
-                .build();
-        requests.add(request);
-
-        // Initialize client that will be used to send requests. This client only needs
-        // to be created
-        // once, and can be reused for multiple requests. After completing all of your
-        // requests, call
-        // the "close" method on the client to safely clean up any remaining background
-        // resources.
-        try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
-            // Perform the request
-            BatchAnnotateImagesResponse response = client.batchAnnotateImages(requests);
-            List<AnnotateImageResponse> responses = response.getResponsesList();
-
-            // Display the results
-            for (AnnotateImageResponse res : responses) {
-                for (LocalizedObjectAnnotation entity : res.getLocalizedObjectAnnotationsList()) {
-                    // System.out.format("Object name: %s%n", entity.getName());
-                    // System.out.format("Confidence: %s%n", entity.getScore());
-                    // System.out.format("Normalized Vertices:%n");
-                    // entity
-                    // .getBoundingPoly()
-                    // .getNormalizedVerticesList()
-                    // .forEach(vertex -> System.out.format("- (%s, %s)%n", vertex.getX(),
-                    // vertex.getY()));
-                    objects.add(entity.getName());
-                }
-            }
-        }
-        return objects;
-    }
-
-    public static void processRequest(ServerRequest req, ServerResponse res) {
-        try {
-            List<String> objects = detectLocalizedObjects(
-                    "/Users/benbrim/Desktop/projects/H-E-B-interview/app/src/main/resources/nola.jpeg");
-            System.out.println(objects.toString());
-            res.status(200);
-            res.send(objects.toString());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        // res.send(objects.toString());
+        // } catch (IOException e) {
+        // // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // res.send("failed");
+        // }
     }
 
     public static void main(String[] args) {
-        WebServer webServer = WebServer.builder().port(8080)
-                .routing(Routing.builder().any((req, res) -> processRequest(req, res)))
+        // String DB_URL = "jdbc:mysql://localhost/heb";
+        // String USER = "test_user";
+        // String PASS = "PASSWORD";
+        // String QUERY = "SELECT images.*,
+        // CONCAT('[',GROUP_CONCAT(image_objects.object),']') objects from images INNER
+        // JOIN image_objects ON images.image_id = image_objects.image_id where
+        // images.image_id=2;";
+
+        // try {
+        // Class.forName("com.mysql.cj.jdbc.Driver");
+        // } catch (ClassNotFoundException e1) {
+        // e1.printStackTrace();
+        // }
+
+        // try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        // Statement stmt = conn.createStatement();
+        // ResultSet rs = stmt.executeQuery(QUERY);) {
+        // // Extract data from result set
+        // while (rs.next()) {
+        // // Retrieve by column name
+        // System.out.print("image_id: " + rs.getInt("image_id"));
+        // System.out.print(", image_label: " + rs.getString("image_label"));
+        // System.out.print(", object_detection: " + rs.getBoolean("object_detection"));
+        // System.out.print(", image: " + rs.getBlob("image"));
+        // System.out.println(", objects: " + rs.getString("objects"));
+        // }
+        // } catch (SQLException e) {
+        // e.printStackTrace();
+        // }
+
+        Config config = Config.create();
+
+        objectDetector = new ObjectDetector();
+        WebServer webServer = WebServer.builder()
+                .routing(createRouting(config))
+                .config(config.get("server"))
+                .addMediaSupport(JsonpSupport.create())
+                .addMediaSupport(JsonbSupport.create())
                 .build()
                 .start()
                 .await(10, TimeUnit.SECONDS);
 
         System.out.println("Server started at: http://localhost:" + webServer.port());
+    }
+
+    private static Routing createRouting(Config config) {
+        Config dbConfig = config.get("db");
+
+        DbClient dbClient = DbClient.builder(dbConfig)
+                .build();
+
+        return Routing.builder()
+                .register("/images", new ImageService(dbClient))
+                .build();
+
     }
 
 }

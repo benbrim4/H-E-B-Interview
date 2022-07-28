@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+db:
+  source: "jdbc"
+  connection:
+    url: "jdbc:mysql://127.0.0.1:3306/heb?useSSL=false" 
+    username: "test_user"
+    password: "PASSWORD"
+  statements: 
+    search-object: "SELECT images.*, CONCAT('[',GROUP_CONCAT(image_objects.object),']') objects from images INNER JOIN image_objects ON images.image_id = image_objects.image_id GROUP BY image_id having objects like "
+    get-image: "SELECT images.*, CONCAT('[',GROUP_CONCAT(image_objects.object),']') objects from images INNER JOIN image_objects ON images.image_id = image_objects.image_id where images.image_id = ?"
+    select-all-images: "SELECT images.*, CONCAT('[',GROUP_CONCAT(image_objects.object),']') objects from images INNER JOIN image_objects ON images.image_id = image_objects.image_id GROUP BY image_id"
+    insert-image: "INSERT INTO images VALUES (0, :label, :objectDetection, :image)"
+    add-object: "INSERT INTO image_objects VALUES (:id, :object)"
