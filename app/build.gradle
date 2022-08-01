@@ -24,13 +24,14 @@ dependencies {
     implementation platform("io.helidon:helidon-dependencies:2.5.1")
     implementation 'jakarta.json:jakarta.json-api:2.1.1'
     implementation 'io.helidon.webserver:helidon-webserver'
+    implementation 'io.helidon.webserver:helidon-webserver-static-content'
     implementation 'io.helidon.dbclient:helidon-dbclient'
     implementation 'io.helidon.dbclient:helidon-dbclient-jdbc'
     implementation 'io.helidon.dbclient:helidon-dbclient-jsonp'
     implementation 'io.helidon.config:helidon-config-yaml'
     implementation 'io.helidon.media:helidon-media-jsonb'
     implementation 'io.helidon.media:helidon-media-jsonp'
-    implementation 'com.h2database:h2'
+    implementation 'io.helidon.media:helidon-media-multipart'
     implementation platform('com.google.cloud:libraries-bom:26.0.0')
     implementation 'com.google.cloud:google-cloud-vision'
     implementation 'mysql:mysql-connector-java:8.0.29'

@@ -5,75 +5,26 @@ package com.heb.interview;
 
 import java.util.concurrent.TimeUnit;
 
+import io.helidon.common.http.Http;
 import io.helidon.config.Config;
 import io.helidon.dbclient.DbClient;
 import io.helidon.media.jsonb.JsonbSupport;
 import io.helidon.media.jsonp.JsonpSupport;
+import io.helidon.media.multipart.MultiPartSupport;
 import io.helidon.webserver.Routing;
-import io.helidon.webserver.ServerRequest;
-import io.helidon.webserver.ServerResponse;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.staticcontent.StaticContentSupport;
 
 public class App {
 
-    static ObjectDetector objectDetector;
-
-    public static void processPostRequest(ServerRequest req, ServerResponse res) {
-        System.out.println(req.content().asStream(Byte.class));
-        // ByteString byteString;
-        // try {
-        // byteString = ByteString.readFrom(new ByteArrayInputStream(value.getBytes()));
-        // System.out.println(byteString.toStringUtf8());
-        // Image image = Image.newBuilder().setContent(byteString).build();
-        // List<String> objects = objectDetector.detectObjects(image);
-
-        // res.send(objects.toString());
-        // } catch (IOException e) {
-        // // TODO Auto-generated catch block
-        // e.printStackTrace();
-        // res.send("failed");
-        // }
-    }
-
     public static void main(String[] args) {
-        // String DB_URL = "jdbc:mysql://localhost/heb";
-        // String USER = "test_user";
-        // String PASS = "PASSWORD";
-        // String QUERY = "SELECT images.*,
-        // CONCAT('[',GROUP_CONCAT(image_objects.object),']') objects from images INNER
-        // JOIN image_objects ON images.image_id = image_objects.image_id where
-        // images.image_id=2;";
-
-        // try {
-        // Class.forName("com.mysql.cj.jdbc.Driver");
-        // } catch (ClassNotFoundException e1) {
-        // e1.printStackTrace();
-        // }
-
-        // try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-        // Statement stmt = conn.createStatement();
-        // ResultSet rs = stmt.executeQuery(QUERY);) {
-        // // Extract data from result set
-        // while (rs.next()) {
-        // // Retrieve by column name
-        // System.out.print("image_id: " + rs.getInt("image_id"));
-        // System.out.print(", image_label: " + rs.getString("image_label"));
-        // System.out.print(", object_detection: " + rs.getBoolean("object_detection"));
-        // System.out.print(", image: " + rs.getBlob("image"));
-        // System.out.println(", objects: " + rs.getString("objects"));
-        // }
-        // } catch (SQLException e) {
-        // e.printStackTrace();
-        // }
-
         Config config = Config.create();
-
-        objectDetector = new ObjectDetector();
         WebServer webServer = WebServer.builder()
                 .routing(createRouting(config))
                 .config(config.get("server"))
                 .addMediaSupport(JsonpSupport.create())
                 .addMediaSupport(JsonbSupport.create())
+                .addMediaSupport(MultiPartSupport.create())
                 .build()
                 .start()
                 .await(10, TimeUnit.SECONDS);
@@ -89,6 +40,12 @@ public class App {
 
         return Routing.builder()
                 .register("/images", new ImageService(dbClient))
+                .any("/", (req, res) -> {
+                    res.status(Http.Status.MOVED_PERMANENTLY_301);
+                    res.headers().put(Http.Header.LOCATION, "/ui");
+                    res.send();
+                })
+                .register("/ui", StaticContentSupport.builder("/WEB").welcomeFileName("index.html").build())
                 .build();
 
     }

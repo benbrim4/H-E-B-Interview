@@ -1,0 +1,27 @@
+.uploadedImage {
+    height: 20vh;
+}
+
+.hide {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 1px;
+    height: 1px;
+}
+
+.images {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 1rem;
+}
+
+.imageElement {
+    border: 1px solid black;
+    display: inline-block;
+    padding: 1rem;
+}
+
+.imageLabel {}
+
+.imageObjects {}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <iframe name="hiddenFrame" class="hide"></iframe>
+  <div class="upload">
+    <h1>Upload</h1>
+    <form id="uploadForm" action="/images" method="post" enctype="multipart/form-data" name="uploadForm" target="hiddenFrame">
+      Select a file to upload:
+      <input id="files" type="file" name="img" /><br />
+      OR enter Image URL
+      <input id="url" type="text" name="imgURL" />
+      <br />
+      <input id="label" type="text" placeholder="Label" name="label" /><br />
+      <input id="objectDetection" type="checkbox" checked="true" name="objectDetection" />
+      <label>object Detection</label><br />
+      <input type="submit" value="Upload!" name="submit">
+
+    </form>
+  </div>
+  <div id="uploadedImages">
+    <h1>Uploaded Images</h1>
+    <input id="searchBar" type="search" /><button onclick="searchForImages()">Search</button>
+    <div id="images" class="images">
+    </div>
+  </div>
+
+  <script>
+
+  </script>
+</body>
+
+</html>
